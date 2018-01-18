@@ -1,0 +1,286 @@
+// Copyright 2017 JanusGraph Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package org.janusgraph.example;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.tinkerpop.gremlin.driver.Client;
+import org.apache.tinkerpop.gremlin.driver.Cluster;
+import org.apache.tinkerpop.gremlin.driver.Result;
+import org.apache.tinkerpop.gremlin.driver.ResultSet;
+import org.apache.tinkerpop.gremlin.process.traversal.Bindings;
+import org.apache.tinkerpop.gremlin.process.traversal.P;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
+import org.janusgraph.core.JanusGraph;
+//import org.janusgraph.core.attribute.Geoshape;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class RemoteGraphApp extends JanusGraphApp {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RemoteGraphApp.class);
+
+    // used for bindings
+    
+    private static final String NAME = "name";
+    private static final String TYPE = "type";
+    private static final String MDATE = "mdate";
+    private static final String ID = "id";
+    private static final String OUT_V = "outV";
+    private static final String IN_V = "inV";
+
+    protected JanusGraph janusgraph;
+    protected Cluster cluster;
+    protected Client client;
+    protected Configuration conf;
+
+    /**
+     * Constructs a graph app using the given properties.
+     * @param fileName location of the properties file
+     */
+    public RemoteGraphApp(final String fileName) {
+        super(fileName);
+        // the server auto-commits per request, so the application code doesn't
+        // need to explicitly commit transactions
+        this.supportsTransactions = false;
+    }
+
+    @Override
+    public GraphTraversalSource openGraph() throws ConfigurationException {
+        LOGGER.info("opening graph");
+        conf = new PropertiesConfiguration(propFileName);
+
+        // using the remote driver for schema
+        try {
+            cluster = Cluster.open(conf.getString("gremlin.remote.driver.clusterFile"));
+            client = cluster.connect();
+        } catch (Exception e) {
+            throw new ConfigurationException(e);
+        }
+
+        // using the remote graph for queries
+        graph = EmptyGraph.instance();
+        g = graph.traversal().withRemote(conf);
+        return g;
+    }
+
+    @Override
+    public void createElements() {
+        LOGGER.info("creating elements");
+
+        // Use bindings to allow the Gremlin Server to cache traversals that
+        // will be reused with different parameters. This minimizes the
+        // number of scripts that need to be compiled and cached on the server.
+        // http://tinkerpop.apache.org/docs/3.2.6/reference/#parameterized-scripts
+        final Bindings b = Bindings.instance();
+
+        // see GraphOfTheGodsFactory.java
+
+        // Start clean
+        g.V().drop().iterate();
+        
+        //Vertices
+        
+        Vertex punching = g.addV(b.of(TYPE, "cutting machine")).property(NAME, b.of(NAME, "punching")).property(ID, b.of(ID, 001)).property(MDATE, b.of(MDATE, "01.06.18.")).next();
+        Vertex welding = g.addV(b.of(TYPE, "thermic machine")).property(NAME, b.of(NAME, "welding")).property(ID, b.of(ID, 002)).property(MDATE, b.of(MDATE, "01.07.18.")).next();
+        Vertex milling = g.addV(b.of(TYPE, "cutting machine")).property(NAME, b.of(NAME, "milling")).property(ID, b.of(ID, 003)).property(MDATE, b.of(MDATE, "01.08.18.")).next();
+        Vertex assembly = g.addV(b.of(TYPE, "construction machine")).property(NAME, b.of(NAME, "assembly")).property(ID, b.of(ID, 004)).property(MDATE, b.of(MDATE, "01.09.18.")).next();
+
+        Vertex dave = g.addV(b.of(TYPE, "person")).property(NAME, b.of(NAME, "dave")).property(ID, b.of(ID, 101)).next();
+        Vertex karl = g.addV(b.of(TYPE, "person")).property(NAME, b.of(NAME, "karl")).property(ID, b.of(ID, 102)).next();
+        Vertex alexa = g.addV(b.of(TYPE, "person")).property(NAME, b.of(NAME, "alexa")).property(ID, b.of(ID, 103)).next();
+        Vertex tom = g.addV(b.of(TYPE, "person")).property(NAME, b.of(NAME, "tom")).property(ID, b.of(ID, 104)).next();
+        Vertex tina = g.addV(b.of(TYPE, "person")).property(NAME, b.of(NAME, "tina")).property(ID, b.of(ID, 105)).next();
+        
+        Vertex blade1 = g.addV(b.of(TYPE, "component")).property(NAME, b.of(NAME, "blade")).property(ID, b.of(ID, 201)).next();
+        Vertex engine1 = g.addV(b.of(TYPE, "component")).property(NAME, b.of(NAME, "engine")).property(ID, b.of(ID, 202)).next();
+        Vertex processor1 = g.addV(b.of(TYPE, "component")).property(NAME, b.of(NAME, "processor")).property(ID, b.of(ID, 203)).next();
+        Vertex thermiccomp1 = g.addV(b.of(TYPE, "component")).property(NAME, b.of(NAME, "thermic component")).property(ID, b.of(ID, 204)).next();
+        Vertex processor2 = g.addV(b.of(TYPE, "component")).property(NAME, b.of(NAME, "processor")).property(ID, b.of(ID, 205)).next();
+        Vertex blade2 = g.addV(b.of(TYPE, "component")).property(NAME, b.of(NAME, "blade")).property(ID, b.of(ID, 206)).next();
+        Vertex engine2 = g.addV(b.of(TYPE, "component")).property(NAME, b.of(NAME, "engine")).property(ID, b.of(ID, 207)).next();
+        Vertex processor3 = g.addV(b.of(TYPE, "component")).property(NAME, b.of(NAME, "processor")).property(ID, b.of(ID, 208)).next();
+        Vertex constrobot1 = g.addV(b.of(TYPE, "component")).property(NAME, b.of(NAME, "construction robot")).property(ID, b.of(ID, 209)).next();
+        Vertex assembly1 = g.addV(b.of(TYPE, "component")).property(NAME, b.of(NAME, "assembly line")).property(ID, b.of(ID, 210)).next();
+        
+        Vertex edgecheck1 = g.addV(b.of(TYPE, "sensor")).property(NAME, b.of(NAME, "edge check")).property(ID, b.of(ID, 301)).next();
+        Vertex tempcheck1 = g.addV(b.of(TYPE, "sensor")).property(NAME, b.of(NAME, "temperature check")).property(ID, b.of(ID, 302)).next();
+        Vertex edgecheck2 = g.addV(b.of(TYPE, "sensor")).property(NAME, b.of(NAME, "edge check")).property(ID, b.of(ID, 303)).next();
+        Vertex finalinspect1 = g.addV(b.of(TYPE, "sensor")).property(NAME, b.of(NAME, "final inspection")).property(ID, b.of(ID, 304)).next();
+
+        //Edges
+        
+        g.V(b.of(OUT_V, punching)).as("a").V(b.of(IN_V, welding)).addE(b.of(TYPE, "supplies to")).from("a").next();
+        g.V(b.of(OUT_V, punching)).as("a").V(b.of(IN_V, milling)).addE(b.of(TYPE, "supplies to")).from("a").next();
+        g.V(b.of(OUT_V, welding)).as("a").V(b.of(IN_V, assembly)).addE(b.of(TYPE, "supplies to")).from("a").next();
+        g.V(b.of(OUT_V, milling)).as("a").V(b.of(IN_V, assembly)).addE(b.of(TYPE, "supplies to")).from("a").next();
+        
+        g.V(b.of(OUT_V, dave)).as("a").V(b.of(IN_V, punching)).addE(b.of(TYPE, "works with")).from("a").next();
+        g.V(b.of(OUT_V, karl)).as("a").V(b.of(IN_V, welding)).addE(b.of(TYPE, "works with")).from("a").next();
+        g.V(b.of(OUT_V, alexa)).as("a").V(b.of(IN_V, milling)).addE(b.of(TYPE, "works with")).from("a").next();
+        g.V(b.of(OUT_V, tom)).as("a").V(b.of(IN_V, assembly)).addE(b.of(TYPE, "works with")).from("a").next();
+        
+        g.V(b.of(OUT_V, punching)).as("a").V(b.of(IN_V, blade1)).addE(b.of(TYPE, "consists of")).from("a").next();
+        g.V(b.of(OUT_V, punching)).as("a").V(b.of(IN_V, engine1)).addE(b.of(TYPE, "consists of")).from("a").next();
+        g.V(b.of(OUT_V, punching)).as("a").V(b.of(IN_V, processor1)).addE(b.of(TYPE, "consists of")).from("a").next();
+        g.V(b.of(OUT_V, welding)).as("a").V(b.of(IN_V, thermiccomp1)).addE(b.of(TYPE, "consists of")).from("a").next();
+        g.V(b.of(OUT_V, welding)).as("a").V(b.of(IN_V, processor2)).addE(b.of(TYPE, "consists of")).from("a").next();
+        g.V(b.of(OUT_V, milling)).as("a").V(b.of(IN_V, blade2)).addE(b.of(TYPE, "consists of")).from("a").next();
+        g.V(b.of(OUT_V, milling)).as("a").V(b.of(IN_V, engine2)).addE(b.of(TYPE, "consists of")).from("a").next();
+        g.V(b.of(OUT_V, milling)).as("a").V(b.of(IN_V, processor3)).addE(b.of(TYPE, "consists of")).from("a").next();
+        g.V(b.of(OUT_V, assembly)).as("a").V(b.of(IN_V, constrobot1)).addE(b.of(TYPE, "consists of")).from("a").next();
+        g.V(b.of(OUT_V, assembly)).as("a").V(b.of(IN_V, assembly1)).addE(b.of(TYPE, "consists of")).from("a").next();
+        
+        g.V(b.of(OUT_V, edgecheck1)).as("a").V(b.of(IN_V, punching)).addE(b.of(TYPE, "checks")).from("a").next();
+        g.V(b.of(OUT_V, tempcheck1)).as("a").V(b.of(IN_V, welding)).addE(b.of(TYPE, "checks")).from("a").next();
+        g.V(b.of(OUT_V, edgecheck2)).as("a").V(b.of(IN_V, milling)).addE(b.of(TYPE, "checks")).from("a").next();
+        g.V(b.of(OUT_V, finalinspect1)).as("a").V(b.of(IN_V, assembly)).addE(b.of(TYPE, "checks")).from("a").next();
+        
+        g.V(b.of(OUT_V, dave)).as("a").V(b.of(IN_V, blade1)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, dave)).as("a").V(b.of(IN_V, engine1)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, karl)).as("a").V(b.of(IN_V, thermiccomp1)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, alexa)).as("a").V(b.of(IN_V, blade2)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, alexa)).as("a").V(b.of(IN_V, engine2)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, tom)).as("a").V(b.of(IN_V, constrobot1)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, tina)).as("a").V(b.of(IN_V, processor1)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, tina)).as("a").V(b.of(IN_V, processor2)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, tina)).as("a").V(b.of(IN_V, processor3)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, tina)).as("a").V(b.of(IN_V, assembly1)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, tina)).as("a").V(b.of(IN_V, edgecheck1)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, tina)).as("a").V(b.of(IN_V, tempcheck1)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, tina)).as("a").V(b.of(IN_V, edgecheck2)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, tina)).as("a").V(b.of(IN_V, finalinspect1)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        
+    }
+
+    @Override
+    public void readElements() {
+        try {
+            if (g == null) {
+                return;
+            }
+
+            LOGGER.info("reading elements");
+            
+            // look up vertex by name can use a composite index in JanusGraph
+            final Optional<Map<Object, Object>> v = g.V().has("name", "punching").valueMap(true).tryNext();
+            if (v.isPresent()) {
+                LOGGER.info(v.get().toString());
+            } else {
+                LOGGER.warn("punching not found");
+            }
+
+            // look up an incident edge
+            final Optional<Map<Object, Object>> edge = g.V().has("name", "punching").outE("supplies to").as("e").inV()
+                    .has("name", "welding").select("e").valueMap(true).tryNext();
+            if (edge.isPresent()) {
+                LOGGER.info(edge.get().toString());
+            } else {
+                LOGGER.warn("punching supplies to welding not found");
+            }
+
+            // numerical range query can use a mixed index in JanusGraph
+            final List<Object> list = g.V().has(TYPE, "cutting machine").values("name").toList();
+            LOGGER.info(list.toString());
+
+            // milling might be deleted
+            final boolean millingExists = g.V().has("name", "milling").hasNext();
+            if (millingExists) {
+                LOGGER.info("milling exists");
+            } else {
+                LOGGER.warn("milling not found");
+            }
+
+            // look up assembly's suppliers
+            final List<Object> suppliers = g.V().has("name", "assembly").inE("supplies to").values("name").dedup().toList();
+            LOGGER.info("assembly's suppliers: " + suppliers.toString());
+
+        } finally {
+            // the default behavior automatically starts a transaction for
+            // any graph interaction, so it is best to finish the transaction
+            // even for read-only graph query operations
+            if (supportsTransactions) {
+                g.tx().rollback();
+            }
+        }
+    }
+    
+    @Override
+    public void closeGraph() throws Exception {
+        LOGGER.info("closing graph");
+        try {
+            if (g != null) {
+                // this closes the remote, no need to close the empty graph
+                g.close();
+            }
+            if (cluster != null) {
+                // the cluster closes all of its clients
+                cluster.close();
+            }
+        } finally {
+            g = null;
+            graph = null;
+            client = null;
+            cluster = null;
+        }
+    }
+
+    @Override
+    public void createSchema() {
+        LOGGER.info("creating schema");
+        // get the schema request as a string
+        final String req = createSchemaRequest();
+        // submit the request to the server
+        final ResultSet resultSet = client.submit(req);
+        // drain the results completely
+        Stream<Result> futureList = resultSet.stream();
+        futureList.map(Result::toString).forEach(LOGGER::info);
+    }
+
+    @Override
+    public void runApp() {
+        try {
+            // open and initialize the graph
+            openGraph();
+
+            // define the schema before loading data
+            if (supportsSchema) {
+                createSchema();
+            }
+
+            // build the graph structure
+            createElements();
+            // read to see they were made
+            readElements();
+            // close the graph
+            closeGraph();
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+    
+    public static void main(String[] args) {
+        final String fileName = (args != null && args.length > 0) ? args[0] : null;
+        final RemoteGraphApp app = new RemoteGraphApp(fileName);
+        app.runApp();
+    }
+}
