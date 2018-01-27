@@ -43,6 +43,7 @@ public class RemoteGraphApp extends JanusGraphApp {
     
     private static final String NAME = "name";
     private static final String TYPE = "type";
+    private static final String SORT = "sort";
     private static final String MDATE = "mdate";
     private static final String ID = "id";
     private static final String OUT_V = "outV";
@@ -100,16 +101,20 @@ public class RemoteGraphApp extends JanusGraphApp {
         
         //Vertices
         
-        Vertex punching = g.addV(b.of(TYPE, "cutting machine")).property(NAME, b.of(NAME, "punching")).property(ID, b.of(ID, 001)).property(MDATE, b.of(MDATE, "01.06.18.")).next();
-        Vertex welding = g.addV(b.of(TYPE, "thermic machine")).property(NAME, b.of(NAME, "welding")).property(ID, b.of(ID, 002)).property(MDATE, b.of(MDATE, "01.07.18.")).next();
-        Vertex milling = g.addV(b.of(TYPE, "cutting machine")).property(NAME, b.of(NAME, "milling")).property(ID, b.of(ID, 003)).property(MDATE, b.of(MDATE, "01.08.18.")).next();
-        Vertex assembly = g.addV(b.of(TYPE, "construction machine")).property(NAME, b.of(NAME, "assembly")).property(ID, b.of(ID, 004)).property(MDATE, b.of(MDATE, "01.09.18.")).next();
+        Vertex punching = g.addV(b.of(TYPE, "machine")).property(SORT, b.of(SORT, "cutting machine")).property(NAME, b.of(NAME, "punching")).property(ID, b.of(ID, 001)).property(MDATE, b.of(MDATE, "01.06.18.")).next();
+        Vertex welding = g.addV(b.of(TYPE, "machine")).property(SORT, b.of(SORT, "thermic machine")).property(NAME, b.of(NAME, "welding")).property(ID, b.of(ID, 002)).property(MDATE, b.of(MDATE, "01.07.18.")).next();
+        Vertex milling = g.addV(b.of(TYPE, "machine")).property(SORT, b.of(SORT, "cutting machine")).property(NAME, b.of(NAME, "milling")).property(ID, b.of(ID, 003)).property(MDATE, b.of(MDATE, "01.08.18.")).next();
+        Vertex assembly = g.addV(b.of(TYPE, "machine")).property(SORT, b.of(SORT, "construction machine")).property(NAME, b.of(NAME, "assembly")).property(ID, b.of(ID, 004)).property(MDATE, b.of(MDATE, "01.09.18.")).next();
+        Vertex storage = g.addV(b.of(TYPE, "machine")).property(SORT, b.of(SORT, "stock machine")).property(NAME, b.of(NAME, "storage")).property(ID, b.of(ID, 005)).property(MDATE, b.of(MDATE, "01.10.18.")).next();
+        Vertex rework = g.addV(b.of(TYPE, "machine")).property(SORT, b.of(SORT, "stock machine")).property(NAME, b.of(NAME, "rework")).property(ID, b.of(ID, 006)).property(MDATE, b.of(MDATE, "01.11.18.")).next();
+        Vertex shipping = g.addV(b.of(TYPE, "machine")).property(SORT, b.of(SORT, "stock machine")).property(NAME, b.of(NAME, "shipping")).property(ID, b.of(ID, 007)).property(MDATE, b.of(MDATE, "01.12.18.")).next();
 
         Vertex dave = g.addV(b.of(TYPE, "person")).property(NAME, b.of(NAME, "dave")).property(ID, b.of(ID, 101)).next();
         Vertex karl = g.addV(b.of(TYPE, "person")).property(NAME, b.of(NAME, "karl")).property(ID, b.of(ID, 102)).next();
         Vertex alexa = g.addV(b.of(TYPE, "person")).property(NAME, b.of(NAME, "alexa")).property(ID, b.of(ID, 103)).next();
         Vertex tom = g.addV(b.of(TYPE, "person")).property(NAME, b.of(NAME, "tom")).property(ID, b.of(ID, 104)).next();
         Vertex tina = g.addV(b.of(TYPE, "person")).property(NAME, b.of(NAME, "tina")).property(ID, b.of(ID, 105)).next();
+        Vertex sebastian = g.addV(b.of(TYPE, "person")).property(NAME, b.of(NAME, "sebastian")).property(ID, b.of(ID, 106)).next();
         
         Vertex blade1 = g.addV(b.of(TYPE, "component")).property(NAME, b.of(NAME, "blade")).property(ID, b.of(ID, 201)).next();
         Vertex engine1 = g.addV(b.of(TYPE, "component")).property(NAME, b.of(NAME, "engine")).property(ID, b.of(ID, 202)).next();
@@ -131,13 +136,20 @@ public class RemoteGraphApp extends JanusGraphApp {
         
         g.V(b.of(OUT_V, punching)).as("a").V(b.of(IN_V, welding)).addE(b.of(TYPE, "supplies to")).from("a").next();
         g.V(b.of(OUT_V, punching)).as("a").V(b.of(IN_V, milling)).addE(b.of(TYPE, "supplies to")).from("a").next();
-        g.V(b.of(OUT_V, welding)).as("a").V(b.of(IN_V, assembly)).addE(b.of(TYPE, "supplies to")).from("a").next();
-        g.V(b.of(OUT_V, milling)).as("a").V(b.of(IN_V, assembly)).addE(b.of(TYPE, "supplies to")).from("a").next();
+        g.V(b.of(OUT_V, welding)).as("a").V(b.of(IN_V, storage)).addE(b.of(TYPE, "supplies to")).from("a").next();
+        g.V(b.of(OUT_V, milling)).as("a").V(b.of(IN_V, storage)).addE(b.of(TYPE, "supplies to")).from("a").next();
+        g.V(b.of(OUT_V, storage)).as("a").V(b.of(IN_V, assembly)).addE(b.of(TYPE, "supplies to")).from("a").next();
+        g.V(b.of(OUT_V, assembly)).as("a").V(b.of(IN_V, rework)).addE(b.of(TYPE, "supplies to")).from("a").next();
+        g.V(b.of(OUT_V, assembly)).as("a").V(b.of(IN_V, shipping)).addE(b.of(TYPE, "supplies to")).from("a").next();
+        g.V(b.of(OUT_V, rework)).as("a").V(b.of(IN_V, shipping)).addE(b.of(TYPE, "supplies to")).from("a").next();
         
         g.V(b.of(OUT_V, dave)).as("a").V(b.of(IN_V, punching)).addE(b.of(TYPE, "works with")).from("a").next();
         g.V(b.of(OUT_V, karl)).as("a").V(b.of(IN_V, welding)).addE(b.of(TYPE, "works with")).from("a").next();
         g.V(b.of(OUT_V, alexa)).as("a").V(b.of(IN_V, milling)).addE(b.of(TYPE, "works with")).from("a").next();
         g.V(b.of(OUT_V, tom)).as("a").V(b.of(IN_V, assembly)).addE(b.of(TYPE, "works with")).from("a").next();
+        g.V(b.of(OUT_V, sebastian)).as("a").V(b.of(IN_V, storage)).addE(b.of(TYPE, "works with")).from("a").next();
+        g.V(b.of(OUT_V, sebastian)).as("a").V(b.of(IN_V, rework)).addE(b.of(TYPE, "works with")).from("a").next();
+        g.V(b.of(OUT_V, sebastian)).as("a").V(b.of(IN_V, shipping)).addE(b.of(TYPE, "works with")).from("a").next();
         
         g.V(b.of(OUT_V, punching)).as("a").V(b.of(IN_V, blade1)).addE(b.of(TYPE, "consists of")).from("a").next();
         g.V(b.of(OUT_V, punching)).as("a").V(b.of(IN_V, engine1)).addE(b.of(TYPE, "consists of")).from("a").next();
@@ -169,6 +181,9 @@ public class RemoteGraphApp extends JanusGraphApp {
         g.V(b.of(OUT_V, tina)).as("a").V(b.of(IN_V, tempcheck1)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
         g.V(b.of(OUT_V, tina)).as("a").V(b.of(IN_V, edgecheck2)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
         g.V(b.of(OUT_V, tina)).as("a").V(b.of(IN_V, finalinspect1)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, sebastian)).as("a").V(b.of(IN_V, storage)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, sebastian)).as("a").V(b.of(IN_V, rework)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
+        g.V(b.of(OUT_V, sebastian)).as("a").V(b.of(IN_V, shipping)).addE(b.of(TYPE, "has technical knowhow")).from("a").next();
         
     }
 
@@ -199,7 +214,7 @@ public class RemoteGraphApp extends JanusGraphApp {
             }
 
             // numerical range query can use a mixed index in JanusGraph
-            final List<Object> list = g.V().has(TYPE, "cutting machine").values("name").toList();
+            final List<Object> list = g.V().has("sort", "stock machine").values("name").dedup().toList();
             LOGGER.info(list.toString());
 
             // milling might be deleted
@@ -210,9 +225,9 @@ public class RemoteGraphApp extends JanusGraphApp {
                 LOGGER.warn("milling not found");
             }
 
-            // look up assembly's suppliers
-            final List<Object> suppliers = g.V().has("name", "assembly").inE("supplies to").values("name").dedup().toList();
-            LOGGER.info("assembly's suppliers: " + suppliers.toString());
+            // look up storage's suppliers
+            final List<Object> suppliers = g.V().has("name", "storage").in("supplies to").values("name").dedup().toList();
+            LOGGER.info("storage's suppliers: " + suppliers.toString());
 
         } finally {
             // the default behavior automatically starts a transaction for
@@ -269,6 +284,11 @@ public class RemoteGraphApp extends JanusGraphApp {
 
             // build the graph structure
             createElements();
+            
+            // wait for server
+          //  System.out.println("Waiting 45 secs before continuing");
+            //Thread.sleep(45000);
+            
             // read to see they were made
             readElements();
             // close the graph
