@@ -1,0 +1,20 @@
+:remote connect tinkerpop.server conf/remote.yaml
+
+:> g.V().drop().iterate()
+
+:> g.addV('id', 001, label, 'machine', 'sort', 'cutting machine', 'name', 'punching', 'mdate', '01.06.18').next()
+:> g.addV('id', 002, label, 'machine', 'sort', 'thermic machine', 'name', 'welding', 'mdate', '01.07.18').next()
+:> g.addV('id', 003, label, 'machine', 'sort', 'cutting machine', 'name', 'milling', 'mdate', '01.08.18').next() 
+:> g.addV('id', 004, label, 'machine', 'sort', 'construction machine', 'name', 'assembly', 'mdate', '01.09.18')
+:> g.addV('id', 005, label, 'machine', 'sort', 'stock machine', 'name', 'storage', 'mdate', '01.10.18')
+:> g.addV('id', 006, label, 'machine', 'sort', 'stock machine', 'name', 'rework', 'mdate', '01.11.18')
+:> g.addV('id', 007, label, 'machine', 'sort', 'stock machine', 'name', 'shipping', 'mdate', '01.12.18')
+
+:> g.V().has('id', 001).next().addEdge('supplies to', g.V().has('id', 002).next())
+:> g.V().has('id', 001).next().addEdge('supplies to', g.V().has('id', 003).next())
+:> g.V().has('id', 002).next().addEdge('supplies to', g.V().has('id', 005).next())
+:> g.V().has('id', 003).next().addEdge('supplies to', g.V().has('id', 005).next())
+:> g.V().has('id', 005).next().addEdge('supplies to', g.V().has('id', 004).next())
+:> g.V().has('id', 004).next().addEdge('supplies to', g.V().has('id', 006).next())
+:> g.V().has('id', 004).next().addEdge('supplies to', g.V().has('id', 007).next())
+:> g.V().has('id', 006).next().addEdge('supplies to', g.V().has('id', 007).next())
