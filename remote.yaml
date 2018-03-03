@@ -1,0 +1,3 @@
+hosts: [aifb-ls3-vm1.aifb.kit.edu]
+port: 8182
+serializer: { className: org.apache.tinkerpop.gremlin.driver.ser.GryoMessageSerializerV1d0, config: { serializeResultToString: true }}
